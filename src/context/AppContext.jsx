@@ -37,6 +37,18 @@ export const AppProvider = ({ children }) => {
             journal: [entry, ...prev.journal]
         }));
     };
+    
+    // ⬇️ NUEVA FUNCIÓN PARA ACTUALIZAR UNA ENTRADA DEL DIARIO POR ID ⬇️
+    const updateJournalEntry = (updatedEntry) => {
+        setData(prev => ({
+            ...prev,
+            // Mapea el array 'journal' y reemplaza la entrada cuyo ID coincide con 'updatedEntry.id'
+            journal: prev.journal.map(entry => 
+                entry.id === updatedEntry.id ? updatedEntry : entry
+            )
+        }));
+    };
+    // ⬆️ FIN DE LA NUEVA FUNCIÓN ⬆️
 
     return (
         <AppContext.Provider value={{
@@ -46,11 +58,18 @@ export const AppProvider = ({ children }) => {
             updateJournal,
             updateCrew,
             updateCharacter,
-            addJournalEntry
+            addJournalEntry,
+            updateJournalEntry, // ⬅️ Asegúrate de exportar la nueva función
         }}>
             {children}
         </AppContext.Provider>
     );
 };
 
-export const useApp = () => useContext(AppContext);
+export const useApp = () => {
+    const context = useContext(AppContext);
+    if (context === undefined) {
+        throw new Error('useApp must be used within an AppProvider');
+    }
+    return context;
+};

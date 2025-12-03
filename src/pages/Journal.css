@@ -17,17 +17,13 @@
     flex-direction: column;
     gap: var(--spacing-md);
     background: rgba(0, 0, 0, 0.4);
+    position: relative; /* Asegura que el botón de borrar se posicione correctamente */
 }
 
 .title-input {
     font-family: var(--font-heading);
     font-size: 1.5rem;
     color: var(--color-accent-amber);
-}
-
-.content-input {
-    resize: vertical;
-    background: rgba(255, 255, 255, 0.05);
 }
 
 .tags-input-container {
@@ -104,42 +100,9 @@
     background: rgba(255, 255, 255, 0.1);
     color: var(--color-text-main);
     box-shadow: none;
-
 }
 
-/* --- Añadido para la funcionalidad de Edición y Sugerencias --- */
-
-.journal-editor h3 {
-    color: var(--color-accent-copper);
-    margin-top: 0;
-}
-
-.entry-actions {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    display: flex;
-    gap: var(--spacing-sm);
-    /* Asegura que los botones estén por encima del texto de la entrada */
-    z-index: 10; 
-}
-
-.btn-icon {
-    /* Estilo para un botón que solo es un icono */
-    background: rgba(0, 0, 0, 0.4);
-    border: 1px solid var(--color-border);
-    border-radius: var(--border-radius);
-    padding: 6px;
-    cursor: pointer;
-    color: var(--color-text-muted);
-    transition: color 0.2s, background 0.2s;
-}
-
-.btn-icon:hover {
-    color: var(--color-accent-amber);
-    background: rgba(0, 0, 0, 0.6);
-}
-
+/* ------------------------------------------------------------------ */
 /* --- ESTILOS DE LEXICAL TOOLBAR (Botones con estilo Tag) --- */
 
 .toolbar {
@@ -202,34 +165,63 @@
     caret-color: var(--color-accent-amber);
 }
 
-.tags-suggestion-list {
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-sm);
-    flex-wrap: wrap;
-    padding-top: 0;
-    font-size: 0.9rem;
+.editor-placeholder {
     color: var(--color-text-muted);
+    opacity: 0.6;
+    position: absolute;
+    top: var(--spacing-md);
+    left: var(--spacing-md);
+    user-select: none;
+    pointer-events: none;
 }
 
-.tags-suggestion-list span:first-child {
-    /* Estilo para la palabra "Sugerencias:" */
-    color: var(--color-text-muted);
+/* ------------------------------------------------------------------ */
+/* --- ESTILOS DE LEXICAL PARA FORMATO (Alineación y Texto) --- */
+
+/* Estilos aplicados por Lexical a los bloques (párrafos) para ALINEACIÓN */
+.align-left {
+    text-align: left;
+}
+.align-center {
+    text-align: center;
+}
+.align-right {
+    text-align: right;
+}
+
+/* Estilos para el texto (se usan las clases definidas en initialConfig.theme.text) */
+.text-bold {
     font-weight: bold;
 }
-
-.tag-suggestion {
-    cursor: pointer;
-    background: rgba(184, 115, 51, 0.1); /* Cobre muy suave */
-    color: var(--color-accent-copper);
-    padding: 2px 8px;
-    border-radius: 4px;
-    font-size: 0.8rem;
-    font-family: var(--font-heading);
-    border: 1px solid rgba(184, 115, 51, 0.3);
-    transition: background 0.2s;
+.text-italic {
+    font-style: italic;
+}
+.text-underline {
+    text-decoration: underline;
 }
 
-.tag-suggestion:hover {
-    background: rgba(184, 115, 51, 0.4); /* Cobre más visible al pasar el ratón */
+/* ------------------------------------------------------------------ */
+/* --- ESTILOS PARA EL BOTÓN DE BORRAR --- */
+
+.editor-delete-action {
+    position: absolute;
+    top: var(--spacing-md);
+    right: var(--spacing-md);
+    z-index: 10;
+}
+
+.btn-delete {
+    background: transparent;
+    border: 1px solid var(--color-danger); /* Usa un color de peligro */
+    color: var(--color-danger);
+    padding: var(--spacing-xs) var(--spacing-sm);
+    border-radius: var(--border-radius-sm);
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+}
+
+.btn-delete:hover {
+    background: var(--color-danger);
+    color: var(--color-text-main);
 }

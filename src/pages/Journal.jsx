@@ -2,11 +2,13 @@ import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import { Plus, Save, Tag, Edit, X, Bold, Italic, Underline } from 'lucide-react';
 
-// ⬇️ IMPORTACIONES DE LEXICAL (corregidas para evitar el error de importación) ⬇️
+// ⬇️ IMPORTACIONES DE LEXICAL (corregidas para el Build de Producción) ⬇️
 import { 
-    LexicalComposer, 
-    useLexicalComposerContext 
+    LexicalComposer,
+    // Eliminamos useLexicalComposerContext de aquí
 } from '@lexical/react/LexicalComposer';
+// ✅ Importamos useLexicalComposerContext desde su propio paquete:
+import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext'; 
 import { RichTextPlugin } from '@lexical/react/LexicalRichTextPlugin';
 import { ContentEditable } from '@lexical/react/LexicalContentEditable';
 import { HistoryPlugin } from '@lexical/react/LexicalHistoryPlugin';
@@ -27,7 +29,8 @@ import './Journal.css';
 // ====================================================================
 
 const ToolbarPlugin = () => {
-    const [editor] = useLexicalComposerContext();
+    // La desestructuración del array [editor] funciona correctamente
+    const [editor] = useLexicalComposerContext(); 
     
     // Función de ayuda para envolver los comandos
     const execCommand = (command) => () => editor.dispatchCommand(command, undefined);
@@ -55,7 +58,6 @@ const ToolbarPlugin = () => {
             >
                 <Underline size={16} />
             </button>
-            {/* Si deseas más opciones (alineación, etc.), deben añadirse aquí */}
         </div>
     );
 }
@@ -64,11 +66,8 @@ const ToolbarPlugin = () => {
 // ⚙️ COMPONENTE LEXICAL: EDITOR PRINCIPAL CON CONVERSIÓN HTML
 // ====================================================================
 
-// **Configuración inicial (sin referencia a LexicalTheme)**
 const initialConfig = {
-    // ❌ Se eliminó la referencia a 'theme' que causaba el error de importación
     nodes: [
-        // Nodos necesarios para rich text básico
         TextNode,
     ],
     onError: (error) => {
@@ -79,16 +78,14 @@ const initialConfig = {
 const JournalTextEditor = ({ initialContent, onChange }) => {
     const [editor] = useLexicalComposerContext();
     
-    // 1. Hook para convertir Lexical State a HTML al cambiar el contenido
     const handleChange = useCallback((editorState) => {
         editorState.read(() => {
-            // Genera la cadena HTML
             const htmlString = $generateHtmlFromNodes(editor, null);
             onChange(htmlString);
         });
     }, [editor, onChange]);
 
-    // 2. Hook para cargar contenido HTML al iniciar la edición
+    // Hook para cargar contenido HTML al iniciar la edición
     useEffect(() => {
         if (initialContent) {
             editor.update(() => {
@@ -96,16 +93,13 @@ const JournalTextEditor = ({ initialContent, onChange }) => {
                 const dom = parser.parseFromString(initialContent, 'text/html');
                 const nodes = $convertFromHTML(dom);
                 
-                // Limpia el editor y luego inserta los nodos cargados
                 $getRoot().clear();
                 $insertNodes(nodes);
             }, { tag: 'initial-load' });
         } else {
-             // Limpia el editor para una nueva entrada si no hay contenido inicial
             editor.dispatchCommand(CLEAR_EDITOR_COMMAND, undefined);
         }
-    }, [editor, initialContent]); // Se ejecuta solo cuando el editor o el contenido inicial cambian
-
+    }, [editor, initialContent]);
 
     return (
         <>
@@ -115,7 +109,6 @@ const JournalTextEditor = ({ initialContent, onChange }) => {
                 <HistoryPlugin /> 
                 
                 <RichTextPlugin
-                    // ContentEditable sin referencia a MuiContentEditable
                     contentEditable={<ContentEditable className="ContentEditable__root" />}
                     placeholder={
                         <div className="editor-placeholder">Escribe tu entrada de diario...</div>
@@ -132,7 +125,6 @@ const JournalTextEditor = ({ initialContent, onChange }) => {
 // ====================================================================
 
 const Journal = () => {
-    // Se asume que updateJournalEntry está disponible
     const { data, addJournalEntry, updateJournalEntry, userRole } = useApp(); 
     const [editingId, setEditingId] = useState(null); 
     const [formData, setFormData] = useState({ title: '', content: '', tags: '' });
@@ -147,7 +139,6 @@ const Journal = () => {
 
     const startNewEntry = () => {
         setEditingId('new'); 
-        // El contenido inicial debe ser HTML vacío (Lexical lo convierte a su estado)
         setFormData({ title: '', content: '', tags: '' }); 
     };
 
@@ -155,7 +146,6 @@ const Journal = () => {
         setEditingId(entry.id); 
         setFormData({
             title: entry.title,
-            // Aseguramos que el contenido sea un string vacío si es null o undefined
             content: entry.content || '', 
             tags: entry.tags.join(', ')
         });
@@ -177,7 +167,7 @@ const Journal = () => {
                 id: editingId,
                 title: formData.title,
                 date: originalEntry ? originalEntry.date : new Date().toISOString().split('T')[0],
-                content: formData.content, // Contenido HTML
+                content: formData.content,
                 tags: processedTags
             };
             if (updateJournalEntry) {
@@ -188,7 +178,7 @@ const Journal = () => {
                 id: Date.now(),
                 title: formData.title,
                 date: new Date().toISOString().split('T')[0],
-                content: formData.content, // Contenido HTML
+                content: formData.content,
                 tags: processedTags
             };
             addJournalEntry(newEntry);
@@ -220,7 +210,6 @@ const Journal = () => {
                 onChange={e => setFormData({ ...formData, title: e.target.value })}
             />
             
-            {/* ⭐️ CONTENEDOR DE LEXICAL COMPOSER ⭐️ */}
             <div className="rich-text-editor-container">
                 <LexicalComposer initialConfig={initialConfig}>
                     <JournalTextEditor 
@@ -229,9 +218,7 @@ const Journal = () => {
                     />
                 </LexicalComposer>
             </div>
-            {/* ⭐️ FIN CONTENEDOR DE LEXICAL COMPOSER ⭐️ */}
 
-            {/* Sección de Tags y Sugerencias */}
             <div className="tags-input-container">
                 <Tag size={16} />
                 <input
@@ -305,7 +292,6 @@ const Journal = () => {
                                     <span className="entry-date">{entry.date}</span>
                                 </div>
                                 <div className="entry-content">
-                                    {/* RENDERIZADO DE CONTENIDO HTML */}
                                     <div 
                                         dangerouslySetInnerHTML={{ __html: entry.content }} 
                                         className="rendered-html-content"

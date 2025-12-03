@@ -1,10 +1,12 @@
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
-import { Plus, Save, Tag, Edit, X, Bold, Italic, Underline } from 'lucide-react';
+import { Plus, Save, Tag, Edit, X, Bold, Italic, Underline, AlignLeft, AlignCenter, AlignRight } from 'lucide-react';
 
-// ⬇️ IMPORTACIONES DE LEXICAL (Fixes DEFINITIVOS) ⬇️
+// ⬇️ IMPORTACIONES DE LEXICAL ⬇️
 import { 
     LexicalComposer,
+    // Importamos useLexicalNodeSelection para manejar el estado de selección
+    useLexicalNodeSelection
 } from '@lexical/react/LexicalComposer';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext'; 
 import { RichTextPlugin } from '@lexical/react/LexicalRichTextPlugin';
@@ -13,11 +15,20 @@ import { HistoryPlugin } from '@lexical/react/LexicalHistoryPlugin';
 import { OnChangePlugin } from '@lexical/react/LexicalOnChangePlugin';
 import LexicalErrorBoundary from '@lexical/react/LexicalErrorBoundary';
 
-// ✅ Fix 1: Importamos utilidades HTML completas para evitar error de exportación de funciones.
+// Utilidades de comandos y conversión de HTML
 import * as HtmlUtils from '@lexical/html';
-import { $getRoot, $insertNodes, TextNode, CLEAR_EDITOR_COMMAND } from 'lexical';
+import { 
+    $getRoot, 
+    TextNode, 
+    CLEAR_EDITOR_COMMAND, 
+    // Comandos de alineación
+    COMMAND_PRIORITY_CRITICAL,
+    SELECTION_CHANGE_COMMAND,
+    FORMAT_ELEMENT_COMMAND 
+} from 'lexical';
 
-// ❌ Se elimina la importación nominal de TOGGLE_..._COMMANDS que fallaba en el build.
+import { $insertNodes } from 'lexical'; // Importar $insertNodes desde lexical (estaba mal colocado)
+
 // ⬆️ FIN IMPORTACIONES DE LEXICAL ⬆️
 
 import './Journal.css';
@@ -29,34 +40,93 @@ import './Journal.css';
 
 const ToolbarPlugin = () => {
     const [editor] = useLexicalComposerContext(); 
-    
+    // Estado para gestionar los estilos activos
+    const [activeEditor, setActiveEditor] = useState(editor);
+    const [isBold, setIsBold] = useState(false);
+    const [isItalic, setIsItalic] = useState(false);
+    const [isUnderline, setIsUnderline] = useState(false);
+    const [elementFormat, setElementFormat] = useState('left');
+
+    // Función que se ejecuta en cada cambio de selección o contenido
+    const updateToolbar = useCallback(() => {
+        const selection = editor.getEditorState().read(() => $getRoot().getSelection());
+
+        if (selection) {
+            const format = selection.getFormat();
+            setIsBold(format.hasFormat('bold'));
+            setIsItalic(format.hasFormat('italic'));
+            setIsUnderline(format.hasFormat('underline'));
+
+            const element = selection.getNodes()[0].getTopLevelElementOrThrow();
+            const align = element.getFormatType();
+            setElementFormat(align);
+        }
+    }, [editor]);
+
+    // Registro de listeners para actualizar el estado
+    useEffect(() => {
+        return editor.registerCommand(
+            SELECTION_CHANGE_COMMAND,
+            () => {
+                updateToolbar();
+                return false;
+            },
+            COMMAND_PRIORITY_CRITICAL
+        );
+    }, [editor, updateToolbar]);
+
     // Función de ayuda para envolver los comandos
-    const execCommand = (command) => () => editor.dispatchCommand(command, undefined);
+    const execCommand = (command, payload) => () => activeEditor.dispatchCommand(command, payload);
 
     return (
         <div className="toolbar">
+            {/* Botones de formato de texto (usando las cadenas crudas como fix) */}
             <button 
-                // ✅ Fix 2: Usamos las cadenas de comandos crudas ('toggleBold'), 
-                // que es la única forma garantizada de que el build pase.
                 onClick={execCommand('toggleBold')}
-                className="toolbar-item"
+                className={`toolbar-item ${isBold ? 'active' : ''}`}
                 title="Negrita"
             >
                 <Bold size={16} />
             </button>
             <button 
                 onClick={execCommand('toggleItalic')}
-                className="toolbar-item"
+                className={`toolbar-item ${isItalic ? 'active' : ''}`}
                 title="Cursiva"
             >
                 <Italic size={16} />
             </button>
             <button 
                 onClick={execCommand('toggleUnderline')}
-                className="toolbar-item"
+                className={`toolbar-item ${isUnderline ? 'active' : ''}`}
                 title="Subrayado"
             >
                 <Underline size={16} />
+            </button>
+
+            {/* Separador visual */}
+            <div style={{ width: '1px', height: '20px', backgroundColor: 'var(--color-border)' }}></div>
+
+            {/* Botones de alineación */}
+            <button 
+                onClick={execCommand(FORMAT_ELEMENT_COMMAND, 'left')}
+                className={`toolbar-item ${elementFormat === 'left' ? 'active' : ''}`}
+                title="Alinear a la izquierda"
+            >
+                <AlignLeft size={16} />
+            </button>
+            <button 
+                onClick={execCommand(FORMAT_ELEMENT_COMMAND, 'center')}
+                className={`toolbar-item ${elementFormat === 'center' ? 'active' : ''}`}
+                title="Centrar"
+            >
+                <AlignCenter size={16} />
+            </button>
+            <button 
+                onClick={execCommand(FORMAT_ELEMENT_COMMAND, 'right')}
+                className={`toolbar-item ${elementFormat === 'right' ? 'active' : ''}`}
+                title="Alinear a la derecha"
+            >
+                <AlignRight size={16} />
             </button>
         </div>
     );
@@ -67,6 +137,21 @@ const ToolbarPlugin = () => {
 // ====================================================================
 
 const initialConfig = {
+    // Añadimos 'text' y 'element' a los posibles formatos para soportar alineación
+    namespace: 'JournalEditor',
+    theme: {
+        text: {
+            bold: 'text-bold',
+            italic: 'text-italic',
+            underline: 'text-underline',
+        },
+        // Estilos de alineación (se definen en CSS)
+        element: {
+            left: 'align-left',
+            center: 'align-center',
+            right: 'align-right',
+        }
+    },
     nodes: [
         TextNode,
     ],
@@ -80,7 +165,6 @@ const JournalTextEditor = ({ initialContent, onChange }) => {
     
     const handleChange = useCallback((editorState) => {
         editorState.read(() => {
-            // ✅ Uso de HtmlUtils (fix)
             const htmlString = HtmlUtils.$generateHtmlFromNodes(editor, null);
             onChange(htmlString);
         });
@@ -92,7 +176,6 @@ const JournalTextEditor = ({ initialContent, onChange }) => {
                 const parser = new DOMParser();
                 const dom = parser.parseFromString(initialContent, 'text/html');
                 
-                // ✅ Uso de HtmlUtils (fix)
                 const nodes = HtmlUtils.$convertFromHTML(dom);
                 
                 $getRoot().clear();

@@ -70,9 +70,16 @@
 }
 
 .entry-content {
+    /* Mantenemos el estilo de margen para el div contenedor */
+    margin-bottom: var(--spacing-md);
+}
+
+/* 🟢 FIX CRÍTICO: Aseguramos que los estilos de fuente y color lleguen a los párrafos (el texto real) */
+.entry-content .rendered-html-content p {
     font-size: 1.1rem;
     color: var(--color-text-main);
-    margin-bottom: var(--spacing-md);
+    line-height: 1.5;
+    margin: 0 0 var(--spacing-sm) 0; /* Agrega margen entre párrafos */
 }
 
 .tags {

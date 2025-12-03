@@ -49,6 +49,7 @@ const ToolbarPlugin = () => {
                 onClick={execCommand(RichTextCommands.TOGGLE_ITALIC_COMMAND)}
                 className="toolbar-item"
                 title="Cursiva"
+			>
             </button>
             <button 
                 // ✅ Usamos el alias de importación para acceder a la constante

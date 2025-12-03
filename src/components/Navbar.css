@@ -1,0 +1,139 @@
+.navbar {
+    position: relative;
+    width: 100%;
+    height: auto;
+    background-color: transparent;
+    border-right: none;
+    border-bottom: 2px solid var(--color-border-ornate);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: var(--spacing-md) 0;
+    box-shadow: none;
+    z-index: 1000;
+}
+
+.navbar-brand {
+    text-align: center;
+    margin-bottom: var(--spacing-md);
+    border-bottom: none;
+    padding-bottom: 0;
+    width: 100%;
+}
+
+.navbar-logo {
+    max-width: 600px;
+    /* Larger logo as per reference */
+    width: 90%;
+    height: auto;
+    border-radius: 0;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.8);
+    border: none;
+}
+
+.navbar-links {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    gap: var(--spacing-lg);
+    flex-wrap: wrap;
+    width: 100%;
+    background: rgba(0, 0, 0, 0.6);
+    padding: var(--spacing-sm) 0;
+    border-top: 1px solid var(--color-border);
+    border-bottom: 1px solid var(--color-border);
+}
+
+.nav-link {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-sm) var(--spacing-md);
+    color: var(--color-text-muted);
+    border: 1px solid transparent;
+    margin-bottom: 0;
+    transition: all 0.3s ease;
+    font-family: var(--font-heading);
+    text-transform: uppercase;
+    font-size: 1.1rem;
+    letter-spacing: 0.1em;
+}
+
+.nav-link:hover {
+    color: var(--color-accent-amber);
+    background: transparent;
+    text-shadow: 0 0 10px var(--color-accent-amber);
+    border-color: transparent;
+}
+
+.nav-link.active {
+    color: var(--color-accent-highlight);
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid var(--color-accent-copper);
+    box-shadow: none;
+}
+
+.navbar-footer {
+    position: absolute;
+    top: var(--spacing-md);
+    right: var(--spacing-md);
+    border-top: none;
+    padding-top: 0;
+}
+
+.btn-icon {
+    background: none;
+    border: none;
+    color: var(--color-text-muted);
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.btn-icon:hover {
+    color: var(--color-accent-amber);
+}
+
+/* Role Switcher */
+.role-switcher {
+    position: relative;
+    display: inline-block;
+}
+
+.role-menu {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    left: auto;
+    width: 150px;
+    background: var(--color-bg-panel);
+    border: 1px solid var(--color-border);
+    padding: var(--spacing-sm);
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+    z-index: 1001;
+}
+
+.role-menu button {
+    background: none;
+    border: none;
+    color: var(--color-text-muted);
+    text-align: right;
+    cursor: pointer;
+    padding: 4px;
+    font-family: var(--font-heading);
+}
+
+.role-menu button:hover,
+.role-menu button.active {
+    color: var(--color-accent-amber);
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.current-role {
+    display: none;
+    /* Hide text label to keep it clean, rely on icon/menu */
+}

@@ -1,0 +1,160 @@
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Crimson+Text:ital,wght@0,400;0,600;0,700;1,400&display=swap');
+
+:root {
+  /* Colors */
+  --color-bg-dark: #1a1a1a;
+  --color-bg-darker: #121212;
+  --color-bg-panel: #242424;
+
+  --color-text-main: #e0e0e0;
+  --color-text-muted: #a0a0a0;
+  --color-text-highlight: #ffcc00;
+  /* Amber */
+
+  --color-accent-amber: #ffbf00;
+  --color-accent-copper: #b87333;
+  --color-accent-rust: #8b3103;
+  --color-accent-blood: #660000;
+
+  --color-border: #444;
+  --color-border-ornate: #b87333;
+
+  /* Fonts */
+  --font-heading: 'Cinzel', serif;
+  --font-body: 'Crimson Text', serif;
+
+  /* Spacing */
+  --spacing-sm: 0.5rem;
+  --spacing-md: 1rem;
+  --spacing-lg: 2rem;
+
+  /* Textures (Simulated with gradients for now) */
+  --texture-paper: linear-gradient(to bottom right, #eaddcf, #d4c5b0);
+  --texture-metal: linear-gradient(135deg, #2c3e50, #4ca1af);
+  /* Placeholder */
+  --texture-dark-wood: repeating-linear-gradient(45deg, #2b1d0e, #2b1d0e 10px, #1f1408 10px, #1f1408 20px);
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-body);
+  background-color: #0a0a0a;
+  /* Deep black base */
+  color: var(--color-text-main);
+  line-height: 1.6;
+  background-image:
+    radial-gradient(circle at 50% 50%, rgba(20, 20, 20, 0.8) 0%, rgba(0, 0, 0, 0.95) 100%),
+    repeating-linear-gradient(0deg, transparent, transparent 2px, #1a1a1a 2px, #1a1a1a 4px);
+  background-color: #0a0a0a;
+  background-blend-mode: overlay;
+  background-attachment: fixed;
+  background-size: cover;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-heading);
+  color: var(--color-accent-copper);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: var(--spacing-md);
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.9);
+}
+
+a {
+  color: var(--color-accent-amber);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+a:hover {
+  color: var(--color-text-highlight);
+  text-shadow: 0 0 8px var(--color-accent-amber);
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-bg-darker);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-accent-rust);
+  border: 1px solid var(--color-bg-darker);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-accent-copper);
+}
+
+/* Utilities */
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: var(--spacing-md);
+}
+
+.panel {
+  background-color: rgba(20, 20, 20, 0.85);
+  /* Semi-transparent dark */
+  border: 4px solid transparent;
+  border-image: linear-gradient(to bottom right, #b87333, #8b3103, #2b1d0e) 1;
+  padding: var(--spacing-lg);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
+  position: relative;
+  backdrop-filter: blur(2px);
+}
+
+.panel::before {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  right: 2px;
+  bottom: 2px;
+  border: 1px solid rgba(184, 115, 51, 0.3);
+  pointer-events: none;
+}
+
+.btn {
+  background: linear-gradient(to bottom, rgba(40, 40, 40, 0.8), rgba(20, 20, 20, 0.9));
+  border: 1px solid var(--color-accent-copper);
+  color: var(--color-accent-copper);
+  padding: 0.5rem 1.5rem;
+  font-family: var(--font-heading);
+  cursor: pointer;
+  transition: all 0.2s;
+  text-transform: uppercase;
+  font-size: 0.9rem;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+}
+
+.btn:hover {
+  background: var(--color-accent-copper);
+  color: var(--color-bg-darker);
+  box-shadow: 0 0 15px var(--color-accent-copper);
+}
+
+.input-field {
+  background: rgba(0, 0, 0, 0.5);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-main);
+  padding: 0.5rem;
+  font-family: var(--font-body);
+  width: 100%;
+  box-sizing: border-box;
+  transition: border-color 0.3s;
+}
+
+.input-field:focus {
+  border-color: var(--color-accent-amber);
+  outline: none;
+  box-shadow: 0 0 8px rgba(255, 191, 0, 0.3);
+}

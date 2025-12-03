@@ -1,11 +1,12 @@
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
-import { Plus, Save, Tag, Edit, X, Bold, Italic, Underline, AlignLeft, AlignCenter, AlignRight } from 'lucide-react';
+// Importamos los nuevos iconos (Trash2 para borrar)
+import { Plus, Save, Tag, Edit, X, Bold, Italic, Underline, AlignLeft, AlignCenter, AlignRight, Trash2 } from 'lucide-react';
 
 // ⬇️ IMPORTACIONES DE LEXICAL ⬇️
 import { 
     LexicalComposer,
-    // Importamos useLexicalNodeSelection para manejar el estado de selección
+    // Importamos useLexicalNodeSelection (aunque no lo usamos en la toolbar, es una importación común)
     useLexicalNodeSelection
 } from '@lexical/react/LexicalComposer';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext'; 
@@ -21,17 +22,40 @@ import {
     $getRoot, 
     TextNode, 
     CLEAR_EDITOR_COMMAND, 
-    // Comandos de alineación
     COMMAND_PRIORITY_CRITICAL,
     SELECTION_CHANGE_COMMAND,
-    FORMAT_ELEMENT_COMMAND 
+    FORMAT_ELEMENT_COMMAND,
+    $getSelection
 } from 'lexical';
 
-import { $insertNodes } from 'lexical'; // Importar $insertNodes desde lexical (estaba mal colocado)
+import { $insertNodes } from 'lexical';
 
 // ⬆️ FIN IMPORTACIONES DE LEXICAL ⬆️
 
-import './Journal.css';
+// 🐞 FIX CRÍTICO: Mover la configuración fuera del componente principal para evitar su re-renderizado
+const initialConfig = {
+    // Añadimos 'text' y 'element' a los posibles formatos para soportar alineación
+    namespace: 'JournalEditor',
+    theme: {
+        text: {
+            bold: 'text-bold',
+            italic: 'text-italic',
+            underline: 'text-underline',
+        },
+        // Estilos de alineación (se definen en CSS)
+        element: {
+            left: 'align-left',
+            center: 'align-center',
+            right: 'align-right',
+        }
+    },
+    nodes: [
+        TextNode,
+    ],
+    onError: (error) => {
+        console.error("Lexical Error:", error);
+    }
+};
 
 
 // ====================================================================
@@ -40,32 +64,45 @@ import './Journal.css';
 
 const ToolbarPlugin = () => {
     const [editor] = useLexicalComposerContext(); 
-    // Estado para gestionar los estilos activos
     const [activeEditor, setActiveEditor] = useState(editor);
     const [isBold, setIsBold] = useState(false);
     const [isItalic, setIsItalic] = useState(false);
     const [isUnderline, setIsUnderline] = useState(false);
     const [elementFormat, setElementFormat] = useState('left');
 
-    // Función que se ejecuta en cada cambio de selección o contenido
     const updateToolbar = useCallback(() => {
-        const selection = editor.getEditorState().read(() => $getRoot().getSelection());
+        // Usar editor.getEditorState().read() es clave para obtener el estado actual
+        editor.getEditorState().read(() => {
+            const selection = $getSelection();
 
-        if (selection) {
+            if (!selection) return;
+
             const format = selection.getFormat();
             setIsBold(format.hasFormat('bold'));
             setIsItalic(format.hasFormat('italic'));
             setIsUnderline(format.hasFormat('underline'));
 
-            const element = selection.getNodes()[0].getTopLevelElementOrThrow();
-            const align = element.getFormatType();
-            setElementFormat(align);
-        }
+            // Para determinar la alineación, necesitamos el elemento de nivel superior
+            try {
+                const element = selection.getNodes()[0].getTopLevelElementOrThrow();
+                const align = element.getFormatType();
+                setElementFormat(align);
+            } catch (e) {
+                // Si la selección está vacía o es compleja, fallará. Se puede ignorar o manejar.
+                setElementFormat('left');
+            }
+        });
     }, [editor]);
 
     // Registro de listeners para actualizar el estado
     useEffect(() => {
-        return editor.registerCommand(
+        const removeUpdateListener = editor.registerUpdateListener(({ editorState }) => {
+            editorState.read(() => {
+                updateToolbar();
+            });
+        });
+
+        const removeSelectionListener = editor.registerCommand(
             SELECTION_CHANGE_COMMAND,
             () => {
                 updateToolbar();
@@ -73,6 +110,12 @@ const ToolbarPlugin = () => {
             },
             COMMAND_PRIORITY_CRITICAL
         );
+
+        // Limpieza de listeners
+        return () => {
+            removeUpdateListener();
+            removeSelectionListener();
+        };
     }, [editor, updateToolbar]);
 
     // Función de ayuda para envolver los comandos
@@ -136,30 +179,6 @@ const ToolbarPlugin = () => {
 // ⚙️ COMPONENTE LEXICAL: EDITOR PRINCIPAL CON CONVERSIÓN HTML
 // ====================================================================
 
-const initialConfig = {
-    // Añadimos 'text' y 'element' a los posibles formatos para soportar alineación
-    namespace: 'JournalEditor',
-    theme: {
-        text: {
-            bold: 'text-bold',
-            italic: 'text-italic',
-            underline: 'text-underline',
-        },
-        // Estilos de alineación (se definen en CSS)
-        element: {
-            left: 'align-left',
-            center: 'align-center',
-            right: 'align-right',
-        }
-    },
-    nodes: [
-        TextNode,
-    ],
-    onError: (error) => {
-        console.error("Lexical Error:", error);
-    }
-};
-
 const JournalTextEditor = ({ initialContent, onChange }) => {
     const [editor] = useLexicalComposerContext();
     
@@ -170,6 +189,7 @@ const JournalTextEditor = ({ initialContent, onChange }) => {
         });
     }, [editor, onChange]);
 
+    // Hook para cargar contenido HTML al iniciar la edición
     useEffect(() => {
         if (initialContent) {
             editor.update(() => {
@@ -182,6 +202,7 @@ const JournalTextEditor = ({ initialContent, onChange }) => {
                 $insertNodes(nodes);
             }, { tag: 'initial-load' });
         } else {
+            // Asegura que el editor se limpie si initialContent es vacío/nulo
             editor.dispatchCommand(CLEAR_EDITOR_COMMAND, undefined);
         }
     }, [editor, initialContent]);
@@ -210,7 +231,8 @@ const JournalTextEditor = ({ initialContent, onChange }) => {
 // ====================================================================
 
 const Journal = () => {
-    const { data, addJournalEntry, updateJournalEntry, userRole } = useApp(); 
+    // Asegúrate de que updateJournalEntry y deleteJournalEntry existen en AppContext
+    const { data, addJournalEntry, updateJournalEntry, deleteJournalEntry, userRole } = useApp(); 
     const [editingId, setEditingId] = useState(null); 
     const [formData, setFormData] = useState({ title: '', content: '', tags: '' });
 
@@ -272,6 +294,16 @@ const Journal = () => {
         cancelEdit();
     };
 
+    const handleDelete = (id) => {
+        // 🗑️ Lógica de confirmación y borrado
+        if (window.confirm('¿Estás seguro de que quieres borrar esta entrada de diario? Esta acción es irreversible.')) {
+            if (deleteJournalEntry) {
+                deleteJournalEntry(id);
+                cancelEdit(); // Cierra la edición después de borrar
+            }
+        }
+    };
+
     const handleTagClick = (tag) => {
         const currentTags = formData.tags.split(',').map(t => t.trim()).filter(t => t);
         if (!currentTags.includes(tag)) {
@@ -287,6 +319,19 @@ const Journal = () => {
     const renderJournalEditor = (inPlace = false) => (
         <div className={`journal-editor panel ${inPlace ? 'in-place-editor' : ''}`}>
             <h3>{editorTitle}</h3>
+            {/* Botón de borrado solo si estamos editando una entrada existente */}
+            {editingId !== 'new' && canEdit && (
+                <div className="editor-delete-action">
+                    <button 
+                        className="btn btn-icon btn-delete" 
+                        onClick={() => handleDelete(editingId)}
+                        title="Borrar entrada"
+                    >
+                        <Trash2 size={16} style={{ marginRight: '8px' }} />
+                        Borrar
+                    </button>
+                </div>
+            )}
             <input
                 type="text"
                 placeholder="Entry Title"
@@ -296,6 +341,7 @@ const Journal = () => {
             />
             
             <div className="rich-text-editor-container">
+                {/* 🐞 FIX CRÍTICO: LexicalComposer usa la configuración externa */}
                 <LexicalComposer initialConfig={initialConfig}>
                     <JournalTextEditor 
                         initialContent={formData.content} 

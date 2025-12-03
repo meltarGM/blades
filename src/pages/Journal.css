@@ -17,7 +17,7 @@
     flex-direction: column;
     gap: var(--spacing-md);
     background: rgba(0, 0, 0, 0.4);
-    position: relative; /* Asegura que el botón de borrar se posicione correctamente */
+    position: relative; /* Necesario para posicionar el botón de borrar */
 }
 
 .title-input {
@@ -101,7 +101,6 @@
     color: var(--color-text-main);
     box-shadow: none;
 }
-
 /* ------------------------------------------------------------------ */
 /* --- ESTILOS DE LEXICAL TOOLBAR (Botones con estilo Tag) --- */
 

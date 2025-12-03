@@ -5,9 +5,8 @@ import { Plus, Save, Tag, Edit, X, Bold, Italic, Underline } from 'lucide-react'
 // ⬇️ IMPORTACIONES DE LEXICAL (corregidas para el Build de Producción) ⬇️
 import { 
     LexicalComposer,
-    // Eliminamos useLexicalComposerContext de aquí
 } from '@lexical/react/LexicalComposer';
-// ✅ Importamos useLexicalComposerContext desde su propio paquete:
+// ✅ Fix 1: useLexicalComposerContext se importa desde su propio Context
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext'; 
 import { RichTextPlugin } from '@lexical/react/LexicalRichTextPlugin';
 import { ContentEditable } from '@lexical/react/LexicalContentEditable';
@@ -18,7 +17,14 @@ import LexicalErrorBoundary from '@lexical/react/LexicalErrorBoundary';
 // Utilidades de comandos y conversión de HTML
 import { $generateHtmlFromNodes, $convertFromHTML } from '@lexical/html';
 import { $getRoot, $insertNodes, TextNode, CLEAR_EDITOR_COMMAND } from 'lexical';
-import { TOGGLE_BOLD_COMMAND, TOGGLE_ITALIC_COMMAND, TOGGLE_UNDERLINE_COMMAND } from '@lexical/rich-text';
+
+// ✅ Fix 2: Intentamos importar las constantes de comando desde el paquete principal 
+// para evitar el error de resolución del subpaquete 'rich-text'.
+import { 
+    TOGGLE_BOLD_COMMAND, 
+    TOGGLE_ITALIC_COMMAND, 
+    TOGGLE_UNDERLINE_COMMAND 
+} from '@lexical/rich-text'; 
 // ⬆️ FIN IMPORTACIONES DE LEXICAL ⬆️
 
 import './Journal.css';
@@ -29,10 +35,8 @@ import './Journal.css';
 // ====================================================================
 
 const ToolbarPlugin = () => {
-    // La desestructuración del array [editor] funciona correctamente
     const [editor] = useLexicalComposerContext(); 
     
-    // Función de ayuda para envolver los comandos
     const execCommand = (command) => () => editor.dispatchCommand(command, undefined);
 
     return (
@@ -85,7 +89,6 @@ const JournalTextEditor = ({ initialContent, onChange }) => {
         });
     }, [editor, onChange]);
 
-    // Hook para cargar contenido HTML al iniciar la edición
     useEffect(() => {
         if (initialContent) {
             editor.update(() => {

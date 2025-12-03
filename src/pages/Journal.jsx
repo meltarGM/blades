@@ -2,11 +2,11 @@ import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import { Plus, Save, Tag, Edit, X, Bold, Italic, Underline } from 'lucide-react';
 
-// ⬇️ IMPORTACIONES DE LEXICAL (corregidas para el Build de Producción) ⬇️
+// ⬇️ IMPORTACIONES DE LEXICAL (Fixes aplicados) ⬇️
 import { 
     LexicalComposer,
 } from '@lexical/react/LexicalComposer';
-// ✅ Fix 1: useLexicalComposerContext se importa desde su propio Context
+// Fix 1: useLexicalComposerContext importado desde su Contexto
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext'; 
 import { RichTextPlugin } from '@lexical/react/LexicalRichTextPlugin';
 import { ContentEditable } from '@lexical/react/LexicalContentEditable';
@@ -18,13 +18,8 @@ import LexicalErrorBoundary from '@lexical/react/LexicalErrorBoundary';
 import { $generateHtmlFromNodes, $convertFromHTML } from '@lexical/html';
 import { $getRoot, $insertNodes, TextNode, CLEAR_EDITOR_COMMAND } from 'lexical';
 
-// ✅ Fix 2: Intentamos importar las constantes de comando desde el paquete principal 
-// para evitar el error de resolución del subpaquete 'rich-text'.
-import { 
-    TOGGLE_BOLD_COMMAND, 
-    TOGGLE_ITALIC_COMMAND, 
-    TOGGLE_UNDERLINE_COMMAND 
-} from '@lexical/rich-text'; 
+// ✅ Fix 2: Importamos el módulo completo para evitar el error de resolución de constantes.
+import * as RichTextCommands from '@lexical/rich-text'; 
 // ⬆️ FIN IMPORTACIONES DE LEXICAL ⬆️
 
 import './Journal.css';
@@ -42,21 +37,22 @@ const ToolbarPlugin = () => {
     return (
         <div className="toolbar">
             <button 
-                onClick={execCommand(TOGGLE_BOLD_COMMAND)}
+                // ✅ Usamos el alias de importación para acceder a la constante
+                onClick={execCommand(RichTextCommands.TOGGLE_BOLD_COMMAND)}
                 className="toolbar-item"
                 title="Negrita"
             >
                 <Bold size={16} />
             </button>
             <button 
-                onClick={execCommand(TOGGLE_ITALIC_COMMAND)}
+                // ✅ Usamos el alias de importación para acceder a la constante
+                onClick={execCommand(RichTextCommands.TOGGLE_ITALIC_COMMAND)}
                 className="toolbar-item"
                 title="Cursiva"
-            >
-                <Italic size={16} />
             </button>
             <button 
-                onClick={execCommand(TOGGLE_UNDERLINE_COMMAND)}
+                // ✅ Usamos el alias de importación para acceder a la constante
+                onClick={execCommand(RichTextCommands.TOGGLE_UNDERLINE_COMMAND)}
                 className="toolbar-item"
                 title="Subrayado"
             >

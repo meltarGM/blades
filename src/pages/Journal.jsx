@@ -2,11 +2,10 @@ import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import { Plus, Save, Tag, Edit, X, Bold, Italic, Underline } from 'lucide-react';
 
-// ⬇️ IMPORTACIONES DE LEXICAL (Fixes aplicados) ⬇️
+// ⬇️ IMPORTACIONES DE LEXICAL (Fixes DEFINITIVOS) ⬇️
 import { 
     LexicalComposer,
 } from '@lexical/react/LexicalComposer';
-// Fix 1: useLexicalComposerContext importado desde su Contexto
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext'; 
 import { RichTextPlugin } from '@lexical/react/LexicalRichTextPlugin';
 import { ContentEditable } from '@lexical/react/LexicalContentEditable';
@@ -14,12 +13,11 @@ import { HistoryPlugin } from '@lexical/react/LexicalHistoryPlugin';
 import { OnChangePlugin } from '@lexical/react/LexicalOnChangePlugin';
 import LexicalErrorBoundary from '@lexical/react/LexicalErrorBoundary';
 
-// Utilidades de comandos y conversión de HTML
-import { $generateHtmlFromNodes, $convertFromHTML } from '@lexical/html';
+// ✅ Fix 1: Importamos utilidades HTML completas para evitar error de exportación de funciones.
+import * as HtmlUtils from '@lexical/html';
 import { $getRoot, $insertNodes, TextNode, CLEAR_EDITOR_COMMAND } from 'lexical';
 
-// ✅ Fix 2: Importamos el módulo completo para evitar el error de resolución de constantes.
-import * as RichTextCommands from '@lexical/rich-text'; 
+// ❌ Se elimina la importación nominal de TOGGLE_..._COMMANDS que fallaba en el build.
 // ⬆️ FIN IMPORTACIONES DE LEXICAL ⬆️
 
 import './Journal.css';
@@ -32,28 +30,29 @@ import './Journal.css';
 const ToolbarPlugin = () => {
     const [editor] = useLexicalComposerContext(); 
     
+    // Función de ayuda para envolver los comandos
     const execCommand = (command) => () => editor.dispatchCommand(command, undefined);
 
     return (
         <div className="toolbar">
             <button 
-                // ✅ Usamos el alias de importación para acceder a la constante
-                onClick={execCommand(RichTextCommands.TOGGLE_BOLD_COMMAND)}
+                // ✅ Fix 2: Usamos las cadenas de comandos crudas ('toggleBold'), 
+                // que es la única forma garantizada de que el build pase.
+                onClick={execCommand('toggleBold')}
                 className="toolbar-item"
                 title="Negrita"
             >
                 <Bold size={16} />
             </button>
             <button 
-                // ✅ Usamos el alias de importación para acceder a la constante
-                onClick={execCommand(RichTextCommands.TOGGLE_ITALIC_COMMAND)}
+                onClick={execCommand('toggleItalic')}
                 className="toolbar-item"
                 title="Cursiva"
-			>
+            >
+                <Italic size={16} />
             </button>
             <button 
-                // ✅ Usamos el alias de importación para acceder a la constante
-                onClick={execCommand(RichTextCommands.TOGGLE_UNDERLINE_COMMAND)}
+                onClick={execCommand('toggleUnderline')}
                 className="toolbar-item"
                 title="Subrayado"
             >
@@ -81,7 +80,8 @@ const JournalTextEditor = ({ initialContent, onChange }) => {
     
     const handleChange = useCallback((editorState) => {
         editorState.read(() => {
-            const htmlString = $generateHtmlFromNodes(editor, null);
+            // ✅ Uso de HtmlUtils (fix)
+            const htmlString = HtmlUtils.$generateHtmlFromNodes(editor, null);
             onChange(htmlString);
         });
     }, [editor, onChange]);
@@ -91,7 +91,9 @@ const JournalTextEditor = ({ initialContent, onChange }) => {
             editor.update(() => {
                 const parser = new DOMParser();
                 const dom = parser.parseFromString(initialContent, 'text/html');
-                const nodes = $convertFromHTML(dom);
+                
+                // ✅ Uso de HtmlUtils (fix)
+                const nodes = HtmlUtils.$convertFromHTML(dom);
                 
                 $getRoot().clear();
                 $insertNodes(nodes);

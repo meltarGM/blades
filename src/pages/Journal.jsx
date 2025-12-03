@@ -1,8 +1,8 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import { Plus, Save, Tag, Edit, X, Bold, Italic, Underline } from 'lucide-react';
 
-// ⬇️ IMPORTACIONES DE LEXICAL ⬇️
+// ⬇️ IMPORTACIONES DE LEXICAL (corregidas para evitar el error de importación) ⬇️
 import { 
     LexicalComposer, 
     useLexicalComposerContext 
@@ -11,15 +11,11 @@ import { RichTextPlugin } from '@lexical/react/LexicalRichTextPlugin';
 import { ContentEditable } from '@lexical/react/LexicalContentEditable';
 import { HistoryPlugin } from '@lexical/react/LexicalHistoryPlugin';
 import { OnChangePlugin } from '@lexical/react/LexicalOnChangePlugin';
-import { MuiContentEditable, theme } from './LexicalTheme'; // MuiContentEditable y theme son marcadores de posición
 import LexicalErrorBoundary from '@lexical/react/LexicalErrorBoundary';
 
-// Utilidades para la conversión HTML
-import { $generateHtmlFromNodes, $convertToMarkdownString } from '@lexical/html';
-import { $getRoot, $insertNodes, EditorState, TextNode, CLEAR_EDITOR_COMMAND, COMMAND_PRIORITY_LOW } from 'lexical';
-import { $convertFromMarkdownString, TRANSFORMERS } from '@lexical/markdown';
-
-// Componente para la barra de herramientas (Toolbar)
+// Utilidades de comandos y conversión de HTML
+import { $generateHtmlFromNodes, $convertFromHTML } from '@lexical/html';
+import { $getRoot, $insertNodes, TextNode, CLEAR_EDITOR_COMMAND } from 'lexical';
 import { TOGGLE_BOLD_COMMAND, TOGGLE_ITALIC_COMMAND, TOGGLE_UNDERLINE_COMMAND } from '@lexical/rich-text';
 // ⬆️ FIN IMPORTACIONES DE LEXICAL ⬆️
 
@@ -30,7 +26,6 @@ import './Journal.css';
 // 🛠️ COMPONENTE LEXICAL: BARRA DE HERRAMIENTAS
 // ====================================================================
 
-// Este componente simple es la barra superior que permite Negrita, Cursiva, etc.
 const ToolbarPlugin = () => {
     const [editor] = useLexicalComposerContext();
     
@@ -60,7 +55,7 @@ const ToolbarPlugin = () => {
             >
                 <Underline size={16} />
             </button>
-            {/* Se pueden añadir más comandos (alineación, listas, etc.) aquí */}
+            {/* Si deseas más opciones (alineación, etc.), deben añadirse aquí */}
         </div>
     );
 }
@@ -69,69 +64,58 @@ const ToolbarPlugin = () => {
 // ⚙️ COMPONENTE LEXICAL: EDITOR PRINCIPAL CON CONVERSIÓN HTML
 // ====================================================================
 
+// **Configuración inicial (sin referencia a LexicalTheme)**
 const initialConfig = {
-    // Aquí puedes definir tu propio tema CSS para Lexical
-    theme: {
-        placeholder: "editor-placeholder"
-        // Puedes añadir estilos aquí si defines tu propio tema
-    },
-    // Nodos que soportará el editor (texto, párrafos, etc.)
+    // ❌ Se eliminó la referencia a 'theme' que causaba el error de importación
     nodes: [
-        // Necesarios para rich text
+        // Nodos necesarios para rich text básico
         TextNode,
     ],
     onError: (error) => {
-        console.error(error);
+        console.error("Lexical Error:", error);
     }
 };
 
 const JournalTextEditor = ({ initialContent, onChange }) => {
     const [editor] = useLexicalComposerContext();
     
-    // Función que se dispara cada vez que el editor cambia
+    // 1. Hook para convertir Lexical State a HTML al cambiar el contenido
     const handleChange = useCallback((editorState) => {
-        // Ejecuta la conversión de Lexical State a HTML y lo pasa al padre
         editorState.read(() => {
+            // Genera la cadena HTML
             const htmlString = $generateHtmlFromNodes(editor, null);
             onChange(htmlString);
         });
     }, [editor, onChange]);
 
-    // Plugin para cargar contenido existente (HTML) al iniciar la edición
-    const InitialContentPlugin = ({ htmlString }) => {
-        // Utilizamos useEffect solo para la carga inicial
-        React.useEffect(() => {
-            if (htmlString && htmlString !== '<p><br></p>') {
-                editor.update(() => {
-                    const parser = new DOMParser();
-                    const dom = parser.parseFromString(htmlString, 'text/html');
-                    const nodes = $convertFromHTML(editor, dom);
-                    $getRoot().select();
-                    $insertNodes(nodes);
-                }, { tag: 'history-merge' });
-            } else {
-                // Limpia el editor para una nueva entrada
-                editor.dispatchCommand(CLEAR_EDITOR_COMMAND, undefined);
-            }
-        }, [editor, htmlString]);
+    // 2. Hook para cargar contenido HTML al iniciar la edición
+    useEffect(() => {
+        if (initialContent) {
+            editor.update(() => {
+                const parser = new DOMParser();
+                const dom = parser.parseFromString(initialContent, 'text/html');
+                const nodes = $convertFromHTML(dom);
+                
+                // Limpia el editor y luego inserta los nodos cargados
+                $getRoot().clear();
+                $insertNodes(nodes);
+            }, { tag: 'initial-load' });
+        } else {
+             // Limpia el editor para una nueva entrada si no hay contenido inicial
+            editor.dispatchCommand(CLEAR_EDITOR_COMMAND, undefined);
+        }
+    }, [editor, initialContent]); // Se ejecuta solo cuando el editor o el contenido inicial cambian
 
-        return null;
-    }
 
     return (
         <>
             <ToolbarPlugin />
             <div className="editor-inner">
-                {/* Plugin para guardar cambios al estado padre */}
                 <OnChangePlugin onChange={handleChange} />
-                
-                {/* Plugin para habilitar historial (Undo/Redo) */}
                 <HistoryPlugin /> 
-
-                {/* Plugin para cargar contenido HTML existente */}
-                <InitialContentPlugin htmlString={initialContent} />
-
+                
                 <RichTextPlugin
+                    // ContentEditable sin referencia a MuiContentEditable
                     contentEditable={<ContentEditable className="ContentEditable__root" />}
                     placeholder={
                         <div className="editor-placeholder">Escribe tu entrada de diario...</div>
@@ -144,17 +128,15 @@ const JournalTextEditor = ({ initialContent, onChange }) => {
 };
 
 // ====================================================================
-// 🔑 COMPONENTE JOURNAL.JSX
+// 🔑 COMPONENTE JOURNAL.JSX (MAIN)
 // ====================================================================
 
 const Journal = () => {
+    // Se asume que updateJournalEntry está disponible
     const { data, addJournalEntry, updateJournalEntry, userRole } = useApp(); 
     const [editingId, setEditingId] = useState(null); 
     const [formData, setFormData] = useState({ title: '', content: '', tags: '' });
-    
-    // ... [Resto de las funciones de setup: allTags, startNewEntry, startEdit, cancelEdit, handleSave, handleTagClick, etc.]
 
-    // Simplemente pegamos el código de la implementación anterior que es compatible
     const allTags = useMemo(() => {
         const tags = new Set();
         data.journal.forEach(entry => {
@@ -165,15 +147,15 @@ const Journal = () => {
 
     const startNewEntry = () => {
         setEditingId('new'); 
-        // Nota: Lexical usa HTML, el contenido inicial debe ser un string vacío o '<p><br></p>'
-        setFormData({ title: '', content: '', tags: '' });
+        // El contenido inicial debe ser HTML vacío (Lexical lo convierte a su estado)
+        setFormData({ title: '', content: '', tags: '' }); 
     };
 
     const startEdit = (entry) => {
         setEditingId(entry.id); 
         setFormData({
             title: entry.title,
-            // Contenido HTML de la entrada
+            // Aseguramos que el contenido sea un string vacío si es null o undefined
             content: entry.content || '', 
             tags: entry.tags.join(', ')
         });
@@ -195,7 +177,7 @@ const Journal = () => {
                 id: editingId,
                 title: formData.title,
                 date: originalEntry ? originalEntry.date : new Date().toISOString().split('T')[0],
-                content: formData.content, 
+                content: formData.content, // Contenido HTML
                 tags: processedTags
             };
             if (updateJournalEntry) {
@@ -206,7 +188,7 @@ const Journal = () => {
                 id: Date.now(),
                 title: formData.title,
                 date: new Date().toISOString().split('T')[0],
-                content: formData.content,
+                content: formData.content, // Contenido HTML
                 tags: processedTags
             };
             addJournalEntry(newEntry);
@@ -224,13 +206,9 @@ const Journal = () => {
         }
     };
     
-    // ... [Fin de las funciones de setup]
-
-
     const canEdit = userRole === 'GM';
     const editorTitle = editingId === 'new' ? 'Nueva Entrada de Diario' : 'Editando Entrada';
 
-    // Función para renderizar el formulario del editor (reutilizable)
     const renderJournalEditor = (inPlace = false) => (
         <div className={`journal-editor panel ${inPlace ? 'in-place-editor' : ''}`}>
             <h3>{editorTitle}</h3>
@@ -327,7 +305,7 @@ const Journal = () => {
                                     <span className="entry-date">{entry.date}</span>
                                 </div>
                                 <div className="entry-content">
-                                    {/* ⭐️ RENDERIZADO DE CONTENIDO HTML (MISMO CÓDIGO) ⭐️ */}
+                                    {/* RENDERIZADO DE CONTENIDO HTML */}
                                     <div 
                                         dangerouslySetInnerHTML={{ __html: entry.content }} 
                                         className="rendered-html-content"

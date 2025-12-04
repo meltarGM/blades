@@ -38,17 +38,30 @@ export const AppProvider = ({ children }) => {
         }));
     };
     
-    // ⬇️ NUEVA FUNCIÓN PARA ACTUALIZAR UNA ENTRADA DEL DIARIO POR ID ⬇️
-    const updateJournalEntry = (updatedEntry) => {
+	const updateJournalEntry = (updatedEntry) => {
         setData(prev => ({
             ...prev,
-            // Mapea el array 'journal' y reemplaza la entrada cuyo ID coincide con 'updatedEntry.id'
-            journal: prev.journal.map(entry => 
-                entry.id === updatedEntry.id ? updatedEntry : entry
+            // 💡 CORRECCIÓN CLAVE: Usar la coerción de tipos (ej: String()) para asegurar que la comparación funcione
+            journal: prev.journal.map(entry => {
+                // Comparamos forzando ambos a string para evitar fallos de tipo (Number vs String)
+                if (String(entry.id) === String(updatedEntry.id)) {
+                    return updatedEntry;
+                }
+                return entry;
+            })
+        }));
+    };
+	
+	const deleteJournalEntry = (entryId) => {
+        setData(prev => ({
+            ...prev,
+            // Filtra el array, manteniendo solo las entradas cuyo ID no coincida.
+            // Usamos String() para asegurar la compatibilidad de tipos en la comparación.
+            journal: prev.journal.filter(entry => 
+                String(entry.id) !== String(entryId)
             )
         }));
     };
-    // ⬆️ FIN DE LA NUEVA FUNCIÓN ⬆️
 
     return (
         <AppContext.Provider value={{
@@ -59,7 +72,8 @@ export const AppProvider = ({ children }) => {
             updateCrew,
             updateCharacter,
             addJournalEntry,
-            updateJournalEntry, // ⬅️ Asegúrate de exportar la nueva función
+            updateJournalEntry,
+			deleteJournalEntry,
         }}>
             {children}
         </AppContext.Provider>

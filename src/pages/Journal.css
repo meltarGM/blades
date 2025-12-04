@@ -70,16 +70,14 @@
 }
 
 .entry-content {
-    /* Mantenemos el estilo de margen para el div contenedor */
     margin-bottom: var(--spacing-md);
 }
 
-/* 🟢 FIX CRÍTICO: Aseguramos que los estilos de fuente y color lleguen a los párrafos (el texto real) */
-.entry-content .rendered-html-content p {
+.entry-content .rendered-html-content p { 
     font-size: 1.1rem;
     color: var(--color-text-main);
     line-height: 1.5;
-    margin: 0 0 var(--spacing-sm) 0; /* Agrega margen entre párrafos */
+    margin: 0 0 var(--spacing-sm) 0;
 }
 
 .tags {
@@ -96,6 +94,16 @@
     font-size: 0.8rem;
     font-family: var(--font-heading);
     border: 1px solid rgba(184, 115, 51, 0.3);
+}
+
+/* 🟢 ESTILO FALTANTE AÑADIDO: .entry-footer */
+.entry-footer {
+    padding-top: var(--spacing-md);
+    border-top: 1px dashed var(--color-border); /* Añadimos un separador visual */
+	display: flex; /* Habilitar flexbox */
+    justify-content: space-between; /* Empuja los elementos (tags y botón) a los extremos */
+    align-items: center; /* Centra verticalmente los elementos */
+    margin-top: var(--spacing-md);
 }
 
 .btn-secondary {
